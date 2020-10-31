@@ -1,37 +1,43 @@
 #include "vec3.h"
 #include <math.h>
 
+// + operator for the vector 3 struct
 vec3 operator+(const vec3 & l, const vec3 & r)
 {
 	return vec3(l.x + r.x, l.y + r.y, l.z + r.z);
 }
 
+// - operator for the vector 3 struct
 vec3 operator-(const vec3 & l, const vec3 & r)
 {
 	return vec3(l.x - r.x, l.y - r.y, l.z -r.z);
 }
 
+// * operator for multiplying a vector by a scalar float
 vec3 operator*(const vec3 & v, float f)
 {
 	return vec3(v.x * f, v.y * f, v.z * f);
 }
 
+// * operator for multiplying a vector by another vector
 vec3 operator*(const vec3 & l, const vec3 & r)
 {
 	return vec3(l.x * r.x, l.y * r.y, l.z * r.z);
 }
 
-
+// returns the dot product between 2 vectors
 float dot(const vec3 & l, const vec3 & r)
 {
 	return (l.x * r.x) + (l.y * r.y) + (l.z * r.z);
 }
 
+//returns the sqared length of a vector
 float lenSq(const vec3 & v)
 {
 	return (v.x * v.x) + (v.y * v.y) + (v.z * v.z);
 }
 
+//returns the length of a vector. try to use lenSq when possible as it avoids sqrtf()
 float len(const vec3 & v)
 {
 	float lenSq = (v.x * v.x) + (v.y * v.y) + (v.z * v.z);
@@ -42,7 +48,8 @@ float len(const vec3 & v)
 	return sqrtf(lenSq);
 }
 
-void normalize(vec3 & v)
+//normalizes a given vector
+void normalize(vec3 & v) 
 {
 	float lenSq = (v.x * v.x) + (v.y * v.y) + (v.z * v.z);
 	if (lenSq < VEC3_EPSILON) { return; }
@@ -52,6 +59,7 @@ void normalize(vec3 & v)
 	v.z *= invLen;
 }
 
+//returns the normalized version of a vector but doesn't change it
 vec3 normalized(const vec3 &v)
 {
 	float lenSq = (v.x * v.x) + (v.y * v.y) + (v.z * v.z);
@@ -60,6 +68,7 @@ vec3 normalized(const vec3 &v)
 	return vec3(v.x * invLen, v.y * invLen, v.z * invLen);
 }
 
+//returns the angle between two vectors in degrees
 float angleDeg(const vec3 & l, const vec3 & r)
 {
 	float sqMagL = (l.x * l.x) + (l.y * l.y) + (l.z * l.z);
@@ -76,6 +85,7 @@ float angleDeg(const vec3 & l, const vec3 & r)
 	return acosf(dot / len) * 57.2958f;
 }
 
+//returns the angle between 2 vectors in radians
 float angleRad(const vec3 & l, const vec3 & r)
 {
 	float sqMagL = (l.x * l.x) + (l.y * l.y) + (l.z * l.z);
@@ -92,6 +102,7 @@ float angleRad(const vec3 & l, const vec3 & r)
 	return acosf(dot / len);
 }
 
+//project a vector onto another vector
 vec3 project(const vec3 & a, const vec3 & b)
 {
 	float magBSq = len(b);
@@ -103,12 +114,14 @@ vec3 project(const vec3 & a, const vec3 & b)
 	return b * scale;
 }
 
+//reject a vector from another vector
 vec3 reject(const vec3 & a, const vec3 & b)
 {
 	vec3 projection = project(a, b);
 	return a - projection;
 }
 
+//reflect a vector through another vector
 vec3 reflect(const vec3 & a, const vec3 & b)
 {
 	float magBSq = len(b);
@@ -121,6 +134,7 @@ vec3 reflect(const vec3 & a, const vec3 & b)
 	return a - proj2;
 }
 
+//returns the cross product between two vectors - a vector perpendicular to the two vectors
 vec3 cross(const vec3 & l, const vec3 & r)
 {
 	return vec3(
@@ -130,6 +144,7 @@ vec3 cross(const vec3 & l, const vec3 & r)
 	);
 }
 
+//lerps a vector to another vector over the period t
 vec3 lerp(const vec3 & s, const vec3 & e, float t)
 {
 	return vec3(
@@ -139,6 +154,7 @@ vec3 lerp(const vec3 & s, const vec3 & e, float t)
 	);
 }
 
+//smooth lerp for a vector
 vec3 slerp(const vec3 & s, const vec3 & e, float t)
 {
 	if (t < 0.01f)
@@ -157,6 +173,7 @@ vec3 slerp(const vec3 & s, const vec3 & e, float t)
 	return from * a + to * b;
 }
 
+//normalized lerp for a vector
 vec3 nlerp(const vec3 & s, const vec3 & e, float t)
 {
 	vec3 linear(
@@ -167,12 +184,14 @@ vec3 nlerp(const vec3 & s, const vec3 & e, float t)
 	return normalized(linear);
 }
 
+// == operator to check if 2 vectors are equal
 bool operator==(const vec3 & l, const vec3 & r)
 {
 	vec3 diff(l - r);
 	return lenSq(diff) < VEC3_EPSILON;
 }
 
+//!= to do the opposite of the == operator
 bool operator!=(const vec3 & l, const vec3 & r)
 {
 	return !(l == r);

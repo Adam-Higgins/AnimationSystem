@@ -238,7 +238,7 @@ mat4 lookAt(const vec3 & position, const vec3 & target, const vec3 & up)
 		-dot(u, position),
 		-dot(f, position)
 		);
-
+                      
 	return mat4(
 	//Transpose upper 3x3 matrix to invert it
 		r.x, u.x, f.x, 0,

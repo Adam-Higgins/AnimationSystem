@@ -1,3 +1,4 @@
+//header file for vector with 4 dimensions (x, y, z, w)
 #pragma once
 template<typename T>
 struct TVec4 {
@@ -15,6 +16,7 @@ struct TVec4 {
 	inline TVec4<T> (T* fv) : x(fv[0]), y(fv[1]), z(fv[2]), w(fv[3]){}
 };
 
+//templates so there can be vec4 of different data type
 typedef TVec4<float> vec4;
 typedef TVec4<int> ivec4;
 typedef TVec4<unsigned int> uivec4;

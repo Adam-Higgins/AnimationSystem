@@ -95,3 +95,163 @@ float dot(const quat & a, const quat & b)
 {
 	return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
 }
+
+float lenSq(const quat& q)
+{
+	return q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
+}
+
+float len(const quat& q)
+{
+	float lenSq = q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w;
+	if (lenSq < QUAT_EPSILON)
+	{
+		return 0.0f;
+	}
+	return sqrtf(lenSq);
+}
+
+void normalize(quat& q)
+{
+	float lenSq = q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w;
+	if (lenSq < QUAT_EPSILON)
+	{
+		return;
+	}
+	float i_len = 1.0f / sqrtf(lenSq);
+
+	q.x *= i_len;
+	q.y *= i_len;
+	q.z *= i_len;
+	q.w *= i_len;
+}
+
+quat normalized(const quat& q)
+{
+	float lenSq = q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w;
+	if (lenSq < QUAT_EPSILON)
+	{
+		return quat();
+	}
+	float il = 1.0f / sqrtf(lenSq); // il: inverse length
+
+	return quat(q.x * il, q.y * il, q.z * il, q.w * il);
+}
+
+quat conjugate(const quat& q)
+{
+	return quat{ -q.x,-q.y,-q.z,-q.w };
+}
+
+quat inverse(const quat& q)
+{
+	float lenSq = q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w;
+	if (lenSq < QUAT_EPSILON)
+	{
+		return quat();
+	}
+	float recip = 1.0f / lenSq;
+	return quat(-q.x * recip,
+				-q.y * recip,
+				-q.z * recip,
+				-q.w * recip
+	);
+}
+
+quat operator*(const quat& Q1, const quat& Q2)
+{
+	return quat(
+		Q2.x*Q1.w + Q2.y*Q1.z - Q2.z*Q1.y + Q2.w*Q1.x,
+	   -Q2.x*Q1.z + Q2.y*Q1.w + Q2.z*Q1.x + Q2.w*Q1.y,
+		Q2.x*Q1.y - Q2.y*Q1.x + Q2.z*Q1.w + Q2.w*Q1.z,
+	   -Q2.x*Q1.x - Q2.y*Q1.y - Q2.z*Q1.z + Q2.w*Q1.w
+	);
+}
+
+vec3 operator*(const quat & q, const vec3 & v)
+{
+	return q.vector * 2.0f * dot(q.vector, v) +
+			v * (q.scalar * q.scalar - dot(q.vector, q.vector)) +
+			cross(q.vector, v) * 2.0f * q.scalar;
+}
+
+quat mix(const quat& from, const quat& to, float t)
+{
+	return from * (1.0f - t) + to * t;
+}
+
+quat nlerp(const quat& from, const quat& to, float t)
+{
+	return normalized(from + (to - from) * t);
+}
+
+quat operator^(const quat& q, float f)
+{
+	float angle = 2.0f * acosf(q.scalar);
+	vec3 axis = normalized(q.vector);
+
+	float halfCos = cosf(f * angle * 0.5f);
+	float halfSin = sinf(f * angle * 0.5f);
+
+	return quat(axis.x * halfSin,
+		axis.y * halfSin,
+		axis.z * halfSin,
+		halfCos
+	);
+}
+
+quat slerp(const quat& start, const quat& end, float t)
+{
+	if (fabsf(dot(start, end)) > 1.0f - QUAT_EPSILON)
+	{
+		return nlerp(start, end, t);
+	}
+
+	quat delta = inverse(start) * end;
+	return normalized((delta ^ t) * start);
+}
+
+quat lookRotation(const vec3& direction, const vec3& up)
+{
+	//find orthonormal basis vectors
+	vec3 f = normalized(direction); //object forward
+	vec3 u = normalized(up); // Desired Up
+	vec3 r = cross(u, f); // object right
+	u = cross(f, r); // object up
+
+	//From world forward to object forward
+	quat worldToObject = fromTo(vec3(0, 0, 1), f);
+
+	// what direction is the new object up?
+	vec3 objectUp = worldToObject * vec3(0, 1, 0);
+	// From object up to desired up
+	quat u2u = fromTo(objectUp, u);
+
+	// Rotate to forward direction first
+	// then twist to correct up
+	quat result = worldToObject * u2u;
+
+	return normalized(result);
+}
+
+mat4 quatToMat4(const quat& q)
+{
+	vec3 r = q * vec3(1, 0, 0);
+	vec3 u = q * vec3(0, 1, 0);
+	vec3 f = q * vec3(0, 0, 1);
+
+	return mat4(r.x, r.y, r.z, 0,
+				u.x, u.y, u.z, 0,
+				f.x, f.y, f.z, 0,
+				0, 0, 0, 1);
+}
+
+quat mat4ToQuat(const mat4& m)
+{
+	vec3 up = normalized(vec3(m.up.x, m.up.y, m.up.z));
+	vec3 forward = normalized(vec3(m.forward.x, m.forward.y, m.forward.z));
+	vec3 right = cross(up, forward);
+	up = cross(forward, right);
+
+	return lookRotation(forward, up);
+}

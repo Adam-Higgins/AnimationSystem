@@ -44,5 +44,28 @@ bool operator!=(const quat& left, const quat& right);
 bool sameOrientation(const quat& l, const quat& r);
 
 float dot(const quat& a, const quat& b);
+float lenSq(const quat & q);
+float len(const quat & q);
+void normalize(quat & q);
+quat normalized(const quat & q);
+quat conjugate(const quat & q);
+quat inverse(const quat & q);
+
+quat operator*(const quat& Q1, const quat& Q2);
+vec3 operator*(const quat& q, const vec3& v);
+quat mix(const quat & from, const quat & to, float t);
+
+quat nlerp(const quat & from, const quat & to, float t);
+
+quat operator^(const quat& q, float f);
+
+quat slerp(const quat & start, const quat & end, float t);
+
+quat lookRotation(const vec3 & direction, const vec3 & up);
+
+mat4 quatToMat4(const quat & q);
+
+quat mat4ToQuat(const mat4 & m);
+
 #endif
 

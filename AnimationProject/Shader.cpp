@@ -99,7 +99,7 @@ void Shader::PopulateAttributes()
 	int count = -1;
 	int length;
 	char name[128];
-	int size;
+	int size; 
 	GLenum type;
 
 	glUseProgram(mHandle); glGetProgramiv(mHandle, GL_ACTIVE_ATTRIBUTES, &count);

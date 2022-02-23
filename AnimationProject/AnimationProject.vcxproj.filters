@@ -81,6 +81,15 @@
     <ClInclude Include="Track.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="TransformTrack.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Pose.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Clip.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="glad.c">
@@ -129,6 +138,15 @@
       <Filter>Resource Files</Filter>
     </ClCompile>
     <ClCompile Include="Track.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TransformTrack.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Pose.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Clip.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

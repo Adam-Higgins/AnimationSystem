@@ -28,7 +28,7 @@ vec3 operator*(const vec3 & l, const vec3 & r)
 // returns the dot product between 2 vectors
 float dot(const vec3 & l, const vec3 & r)
 {
-	return (l.x * r.x) + (l.y * r.y) + (l.z * r.z);
+	return l.x * r.x + l.y * r.y + l.z * r.z;
 }
 
 //returns the sqared length of a vector

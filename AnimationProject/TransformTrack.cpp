@@ -68,24 +68,24 @@ float TransformTrack::GetEndTime()
 
 	if (mPosition.Size() > 1)
 	{
-		result = mPosition.GetStartTime();
+		result = mPosition.GetEndTime();
 		isSet = true;
 	}
 	if (mRotation.Size() > 1)
 	{
-		float rotationStart = mRotation.GetStartTime();
-		if (rotationStart > result || !isSet)
+		float rotationEnd = mRotation.GetEndTime();
+		if (rotationEnd > result || !isSet)
 		{
-			result = rotationStart;
+			result = rotationEnd;
 			isSet = true;
 		}
 	}
 	if (mScale.Size() > 1)
 	{
-		float scaleStart = mScale.GetStartTime();
-		if (scaleStart > result || !isSet)
+		float scaleEnd = mScale.GetEndTime();
+		if (scaleEnd > result || !isSet)
 		{
-			result = scaleStart;
+			result = scaleEnd;
 			isSet = true;
 		}
 	}
@@ -109,7 +109,6 @@ Transform TransformTrack::Sample(const Transform & ref, float time, bool looping
 		result.rotation = mRotation.Sample(time, looping);
 	}
 	if (mScale.Size() > 1) //only if valid
-		    
 	{
 		result.scale = mScale.Sample(time, looping);
 	}

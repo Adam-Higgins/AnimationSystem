@@ -6,6 +6,7 @@
 #include <Windows.h>
 #include <iostream>
 #include "Application.h"
+#include "Sample.h"
 
 //forward declarations
 int WINAPI WinMain(HINSTANCE, HINSTANCE, PSTR, int);
@@ -43,7 +44,7 @@ GLuint gVertexArrayObject = 0;
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine, int iCmdShow)
 {
-	gApplication = new Application();
+	gApplication = new Sample();
 
 	WNDCLASSEX wndclass;
 	wndclass.cbSize = sizeof(WNDCLASSEX);
@@ -65,20 +66,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 	int clientWidth = 800;
 	int clientHeight = 600;
 	RECT windowRect;
-	SetRect(&windowRect,
-		(screenWidth / 2) - (clientWidth / 2),
-		(screenHeight / 2) - (clientHeight / 2),
-		(screenWidth / 2) - (clientWidth / 2),
-		(screenHeight / 2) - (clientHeight / 2));
+	SetRect(&windowRect, (screenWidth / 2) - (clientWidth / 2), (screenHeight / 2) - (clientHeight / 2), (screenWidth / 2) + (clientWidth / 2), (screenHeight / 2) + (clientHeight / 2));
 
-	DWORD style = (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX);
-
+	DWORD style = (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX); // WS_THICKFRAME to resize
 	AdjustWindowRectEx(&windowRect, style, FALSE, 0);
-	HWND hwnd = CreateWindowEx(0, wndclass.lpszClassName,
-		"Game Window", style, windowRect.left,
-		windowRect.top, windowRect.right - windowRect.left,
-		windowRect.bottom - windowRect.top, NULL, NULL,
-		hInstance, szCmdLine);
+	HWND hwnd = CreateWindowEx(0, wndclass.lpszClassName, "Game Window", style, windowRect.left, windowRect.top, windowRect.right - windowRect.left, windowRect.bottom - windowRect.top, NULL, NULL, hInstance, szCmdLine);
 	HDC hdc = GetDC(hwnd);
 
 	PIXELFORMATDESCRIPTOR pfd;

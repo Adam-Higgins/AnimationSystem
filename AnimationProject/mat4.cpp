@@ -34,7 +34,7 @@ mat4 operator*(const mat4 & m, float f)
 		m.xx * f, m.xy * f, m.xz * f, m.xw * f,
 		m.yx * f, m.yy * f, m.yz * f, m.yw * f,
 		m.zx * f, m.zy * f, m.zz * f, m.zw * f,
-		m.tw * f, m.ty * f, m.tz * f, m.tw * f
+		m.tx * f, m.ty * f, m.tz * f, m.tw * f
 	);
 }
 
@@ -49,7 +49,7 @@ mat4 operator*(const mat4 &a, const mat4 &b)
 	return mat4(
 		M4D(0,0), M4D(1,0), M4D(2,0), M4D(3,0),
 		M4D(0,1), M4D(1,1), M4D(2,1), M4D(3,1),
-		M4D(0,2), M4D(1,2), M4D(2,2), M4D(2,3),
+		M4D(0,2), M4D(1,2), M4D(2,2), M4D(3,2),
 		M4D(0,3), M4D(1,3), M4D(2,3), M4D(3,3)
 	);
 }
@@ -122,40 +122,43 @@ mat4 transposed(const mat4 &m)
 }
 
 
-#define M4_3x3MINOR(x, c0, c1, c2, r0, r1, r2) \
-		(x[c0*4+r0] * (x[c1*4+r1] * x[c2*4+r2] - x[c1*4+r2] * \
-		x[c2*4+r1]) - x[c1*4+r0] * (x[c0*4+r1] * x[c2*4+r2] - \
-		x[c0*4+r2] * x[c2*4+r1]) + x[c2*4+r0] * (x[c0*4+r1] * \
-		x[c1*4+r2] - x[c0*4+r2] * x[c1*4+r1]))
+#define M4_3X3MINOR(c0, c1, c2, r0, r1, r2) \
+    (m.v[c0 * 4 + r0] * (m.v[c1 * 4 + r1] * m.v[c2 * 4 + r2] - m.v[c1 * 4 + r2] * m.v[c2 * 4 + r1]) - \
+     m.v[c1 * 4 + r0] * (m.v[c0 * 4 + r1] * m.v[c2 * 4 + r2] - m.v[c0 * 4 + r2] * m.v[c2 * 4 + r1]) + \
+     m.v[c2 * 4 + r0] * (m.v[c0 * 4 + r1] * m.v[c1 * 4 + r2] - m.v[c0 * 4 + r2] * m.v[c1 * 4 + r1]))
 
-float determinant(const mat4 & m)
-{
-	return m.v[0] * M4_3x3MINOR(m.v, 1, 2, 3, 1, 2, 3)
-		- m.v[4] * M4_3x3MINOR(m.v, 0, 2, 3, 1, 2, 3)
-		+ m.v[8] * M4_3x3MINOR(m.v, 0, 1, 3, 1, 2, 3)
-		- m.v[12] * M4_3x3MINOR(m.v, 0, 1, 2, 1, 2, 3);
+float determinant(const mat4& m) {
+	return  m.v[0] * M4_3X3MINOR(1, 2, 3, 1, 2, 3)
+		- m.v[4] * M4_3X3MINOR(0, 2, 3, 1, 2, 3)
+		+ m.v[8] * M4_3X3MINOR(0, 1, 3, 1, 2, 3)
+		- m.v[12] * M4_3X3MINOR(0, 1, 2, 1, 2, 3);
 }
 
 mat4 adjugate(const mat4 & m)
 {
-	//Cof (M[i, j]) = Minor(M[i, j] * pow(-1, i + j)
+	// Cofactor(M[i, j]) = Minor(M[i, j]] * pow(-1, i + j)
 	mat4 cofactor;
-	cofactor.v[0] = M4_3x3MINOR(m.v, 1, 2, 3, 1, 2, 3);
-	cofactor.v[1] = -M4_3x3MINOR(m.v, 1, 2, 3, 0, 2, 3);
-	cofactor.v[2] = M4_3x3MINOR(m.v, 1, 2, 3, 0, 1, 3);
-	cofactor.v[3] = -M4_3x3MINOR(m.v, 1, 2, 3, 0, 1, 2);
-	cofactor.v[4] = -M4_3x3MINOR(m.v, 0, 2, 3, 1, 2, 3);
-	cofactor.v[5] = M4_3x3MINOR(m.v, 0, 2, 3, 0, 2, 3);
-	cofactor.v[6] = -M4_3x3MINOR(m.v, 0, 2, 3, 0, 1, 3);
-	cofactor.v[7] = M4_3x3MINOR(m.v, 0, 2, 3, 0, 1, 2);
-	cofactor.v[8] = M4_3x3MINOR(m.v, 0, 1, 3, 1, 2, 3);
-	cofactor.v[9] = -M4_3x3MINOR(m.v, 0, 1, 3, 0, 2, 3);
-	cofactor.v[10] = M4_3x3MINOR(m.v, 0, 1, 3, 0, 1, 3);
-	cofactor.v[11] = -M4_3x3MINOR(m.v, 0, 1, 3, 0, 1, 2);
-	cofactor.v[12] = -M4_3x3MINOR(m.v, 0, 1, 2, 1, 2, 3);
-	cofactor.v[13] = M4_3x3MINOR(m.v, 0, 1, 2, 0, 2, 3);
-	cofactor.v[14] = -M4_3x3MINOR(m.v, 0, 1, 2, 0, 1, 3);
-	cofactor.v[15] = M4_3x3MINOR(m.v, 0, 1, 2, 0, 1, 2);
+
+	cofactor.v[0] = M4_3X3MINOR(1, 2, 3, 1, 2, 3);
+	cofactor.v[1] = -M4_3X3MINOR(1, 2, 3, 0, 2, 3);
+	cofactor.v[2] = M4_3X3MINOR(1, 2, 3, 0, 1, 3);
+	cofactor.v[3] = -M4_3X3MINOR(1, 2, 3, 0, 1, 2);
+
+	cofactor.v[4] = -M4_3X3MINOR(0, 2, 3, 1, 2, 3);
+	cofactor.v[5] = M4_3X3MINOR(0, 2, 3, 0, 2, 3);
+	cofactor.v[6] = -M4_3X3MINOR(0, 2, 3, 0, 1, 3);
+	cofactor.v[7] = M4_3X3MINOR(0, 2, 3, 0, 1, 2);
+
+	cofactor.v[8] = M4_3X3MINOR(0, 1, 3, 1, 2, 3);
+	cofactor.v[9] = -M4_3X3MINOR(0, 1, 3, 0, 2, 3);
+	cofactor.v[10] = M4_3X3MINOR(0, 1, 3, 0, 1, 3);
+	cofactor.v[11] = -M4_3X3MINOR(0, 1, 3, 0, 1, 2);
+
+	cofactor.v[12] = -M4_3X3MINOR(0, 1, 2, 1, 2, 3);
+	cofactor.v[13] = M4_3X3MINOR(0, 1, 2, 0, 2, 3);
+	cofactor.v[14] = -M4_3X3MINOR(0, 1, 2, 0, 1, 3);
+	cofactor.v[15] = M4_3X3MINOR(0, 1, 2, 0, 1, 2);
+
 	return transposed(cofactor);
 }
 
@@ -194,9 +197,9 @@ mat4 frustum(float l, float r, float b, float t, float n, float f)
 		return mat4();
 	}
 	return mat4(
-		(2.0f * n) / (r - 1.f), 0.f, 0.f, 0.f,
+		(2.0f * n) / (r - l), 0.f, 0.f, 0.f,
 		0.f, (2.0f * n / (t - b)), 0.f, 0.f,
-		(r+1.f) / (r-1.f), (t+b) / (t-b), (-(f+n))/(f-n), -1.f,
+		(r+l) / (r-l), (t+b) / (t-b), (-(f+n))/(f-n), -1.f,
 		0.f, 0.f, (-2.f * f * n) / (f - n), 0.f
 	);
 }
@@ -215,10 +218,10 @@ mat4 ortho(float l, float r, float b, float t, float n, float f)
 		return mat4(); // Error
 	}
 	return mat4(
-		2.0f / (r-1), 0, 0, 0,
+		2.0f / (r-l), 0, 0, 0,
 		0, 2.0f / (t-b), 0, 0,
 		0, 0, -2.0f / (f-n), 0,
-		-((r+1)/(r-1)),-((t+b)/(t-b)),-((f+n)/(f-n)), 1
+		-((r+l)/(r-l)),-((t+b)/(t-b)),-((f+n)/(f-n)), 1
 	);
 }
 

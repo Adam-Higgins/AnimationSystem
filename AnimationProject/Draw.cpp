@@ -28,6 +28,7 @@ static GLenum DrawModeToGLEnum(DrawMode input)
 		return GL_TRIANGLE_FAN;
 		break;
 	default:
+		std::cout << "DrawModeToGLEnum unreachable code hit \n";
 		break;
 	}
 	std::cout << "DrawModeToGLEnum unreachable code hit \n";

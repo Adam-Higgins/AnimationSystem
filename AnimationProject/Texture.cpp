@@ -51,7 +51,7 @@ void Texture::Set(unsigned int uniformIndex, unsigned int textureIndex)
 	glUniform1i(uniformIndex, textureIndex);
 }
 
-void Texture::Unset(unsigned int textureIndex)
+void Texture::UnSet(unsigned int textureIndex)
 {
 	glActiveTexture(GL_TEXTURE0 + textureIndex);
 	glBindTexture(GL_TEXTURE_2D, 0);

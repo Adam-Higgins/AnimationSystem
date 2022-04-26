@@ -18,6 +18,6 @@ public:
 	void Load(const char* path);
 
 	void Set(unsigned int uniform, unsigned int texIndex);
-	void Unset(unsigned int textureIndex);
+	void UnSet(unsigned int textureIndex);
 	unsigned int GetHandle();
 };

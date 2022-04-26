@@ -250,7 +250,7 @@ template<typename T, int N>
 T Track<T, N>::SampleLinear(float time, bool looping)
 {
 	int thisFrame = FrameIndex(time, looping);
-	if (thisFrame < 0 || thisFrame >= mFrames.size() - 1)
+	if (thisFrame < 0 || thisFrame >= (int)(mFrames.size() - 1))
 	{
 		return T();
 	}
@@ -276,7 +276,7 @@ template<typename T, int N>
 T Track<T, N>::SampleCubic(float time, bool looping)
 {
 	int thisFrame = FrameIndex(time, looping);
-	if (thisFrame < 0 || thisFrame >= mFrames.size() - 1)
+	if (thisFrame < 0 || thisFrame >= (int)(mFrames.size() - 1))
 	{
 		return T();
 	}

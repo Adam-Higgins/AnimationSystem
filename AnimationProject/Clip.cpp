@@ -91,7 +91,7 @@ void Clip::RecalculateDuration()
 	mEndTime = 0.0f;
 	bool startSet = false;
 	bool endSet = false;
-	unsigned int trackSize = mTracks.size();
+	unsigned int trackSize = (unsigned int)mTracks.size();
 	for (unsigned int i = 0; i < trackSize; ++i)
 	{
 		if (mTracks[i].IsValid())

@@ -23,7 +23,7 @@ quat angleAxis(float angle, const vec3& axis)
 quat fromTo(const vec3 & from, const vec3 & to)
 {
 	vec3 f = normalized(from);
-	vec3 t = normalized(t);
+	vec3 t = normalized(to);
 	if (f == t)
 	{
 		return quat();
@@ -40,6 +40,7 @@ quat fromTo(const vec3 & from, const vec3 & to)
 			ortho = vec3(0, 0, 1);
 		}
 		vec3 axis = normalized(cross(f, ortho));
+		return quat(axis.x, axis.y, axis.z, 0);
 	}
 	vec3 half = normalized(f + t);
 	vec3 axis = cross(f, half);
@@ -103,7 +104,7 @@ float lenSq(const quat& q)
 
 float len(const quat& q)
 {
-	float lenSq = q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w;
+	float lenSq = q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
 	if (lenSq < QUAT_EPSILON)
 	{
 		return 0.0f;
@@ -128,7 +129,7 @@ void normalize(quat& q)
 
 quat normalized(const quat& q)
 {
-	float lenSq = q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w;
+	float lenSq = q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
 	if (lenSq < QUAT_EPSILON)
 	{
 		return quat();
@@ -140,12 +141,12 @@ quat normalized(const quat& q)
 
 quat conjugate(const quat& q)
 {
-	return quat{ -q.x,-q.y,-q.z,-q.w };
+	return quat{ -q.x,-q.y,-q.z,q.w };
 }
 
 quat inverse(const quat& q)
 {
-	float lenSq = q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w;
+	float lenSq = q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
 	if (lenSq < QUAT_EPSILON)
 	{
 		return quat();
@@ -154,17 +155,17 @@ quat inverse(const quat& q)
 	return quat(-q.x * recip,
 				-q.y * recip,
 				-q.z * recip,
-				-q.w * recip
+				q.w * recip
 	);
 }
 
 quat operator*(const quat& Q1, const quat& Q2)
 {
 	return quat(
-		Q2.x*Q1.w + Q2.y*Q1.z - Q2.z*Q1.y + Q2.w*Q1.x,
-	   -Q2.x*Q1.z + Q2.y*Q1.w + Q2.z*Q1.x + Q2.w*Q1.y,
-		Q2.x*Q1.y - Q2.y*Q1.x + Q2.z*Q1.w + Q2.w*Q1.z,
-	   -Q2.x*Q1.x - Q2.y*Q1.y - Q2.z*Q1.z + Q2.w*Q1.w
+		Q2.x * Q1.w + Q2.y * Q1.z - Q2.z * Q1.y + Q2.w * Q1.x,
+		-Q2.x * Q1.z + Q2.y * Q1.w + Q2.z * Q1.x + Q2.w * Q1.y,
+		Q2.x * Q1.y - Q2.y * Q1.x + Q2.z * Q1.w + Q2.w * Q1.z,
+		-Q2.x * Q1.x - Q2.y * Q1.y - Q2.z * Q1.z + Q2.w * Q1.w
 	);
 }
 
@@ -193,7 +194,8 @@ quat operator^(const quat& q, float f)
 	float halfCos = cosf(f * angle * 0.5f);
 	float halfSin = sinf(f * angle * 0.5f);
 
-	return quat(axis.x * halfSin,
+	return quat(
+		axis.x * halfSin,
 		axis.y * halfSin,
 		axis.z * halfSin,
 		halfCos
@@ -202,13 +204,11 @@ quat operator^(const quat& q, float f)
 
 quat slerp(const quat& start, const quat& end, float t)
 {
-	if (fabsf(dot(start, end)) > 1.0f - QUAT_EPSILON)
-	{
+	if (fabsf(dot(start, end)) > 1.0f - QUAT_EPSILON) {
 		return nlerp(start, end, t);
 	}
 
-	quat delta = inverse(start) * end;
-	return normalized((delta ^ t) * start);
+	return normalized(((inverse(start) * end) ^ t) * start);
 }
 
 quat lookRotation(const vec3& direction, const vec3& up)

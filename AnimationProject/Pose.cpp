@@ -106,36 +106,25 @@ void Pose::GetMatrixPalette(std::vector<mat4>& out)
 
 bool Pose::operator==(const Pose & other)
 {
-	if (mJoints.size() != other.mJoints.size())
-	{
+	if (mJoints.size() != other.mJoints.size()) {
 		return false;
 	}
-	if (mParents.size() != other.mParents.size())
-	{
+	if (mParents.size() != other.mParents.size()) {
 		return false;
 	}
 	unsigned int size = (unsigned int)mJoints.size();
-	for (unsigned int i = 0; i < size; ++i)
-	{
+	for (unsigned int i = 0; i < size; ++i) {
 		Transform thisLocal = mJoints[i];
 		Transform otherLocal = other.mJoints[i];
+
 		int thisParent = mParents[i];
 		int otherParent = other.mParents[i];
 
-		if (thisParent != otherParent)
-		{
+		if (thisParent != otherParent) {
 			return false;
 		}
-		if (thisLocal.position != otherLocal.position)
-		{
-			return false;
-		}
-		if (thisLocal.rotation != otherLocal.rotation)
-		{
-			return false;
-		}
-		if (thisLocal.scale != otherLocal.scale)
-		{
+
+		if (thisLocal != otherLocal) {
 			return false;
 		}
 	}
@@ -145,4 +134,40 @@ bool Pose::operator==(const Pose & other)
 bool Pose::operator!=(const Pose & other)
 {
 	return !(*this == other);
+}
+
+bool Pose::IsInHierarchy(Pose& pose, unsigned int root, unsigned int search)
+{
+	if (search == root)
+	{
+		return true;
+	}
+	int p = pose.GetParent(search);
+
+	while (p >= 0)
+	{
+		if (p == (int)root)
+		{
+			return true;
+		}
+		p = pose.GetParent(p);
+	}
+	return false;
+}
+
+void Pose::Blend(Pose& output, Pose& a, Pose& b, float t, int root)
+{
+	unsigned int numJoints = output.Size();
+	for (unsigned int i = 0; i < numJoints; ++i)
+	{
+		if (root >= 0)
+		{
+			if (!IsInHierarchy(output, root, i))
+			{
+				continue;
+			}
+		}
+
+		output.SetLocalTransform(i, mix(a.GetLocalTransform(i), b.GetLocalTransform(i), t));
+	}
 }

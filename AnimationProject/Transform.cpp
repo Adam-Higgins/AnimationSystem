@@ -106,3 +106,13 @@ vec3 transformVector(const Transform& a, const vec3& b)
 
 	return out;
 }
+
+bool operator==(const Transform& a, const Transform& b) {
+	return a.position == b.position &&
+		a.rotation == b.rotation &&
+		a.scale == b.scale;
+}
+
+bool operator!=(const Transform& a, const Transform& b) {
+	return !(a == b);
+}

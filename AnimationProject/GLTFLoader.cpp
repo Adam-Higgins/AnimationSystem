@@ -1,6 +1,7 @@
 #include "GLTFLoader.h"
 #include "Transform.h"
 #include "Track.h"
+#include <algorithm>
 #include <iostream>
 
 namespace GLTFHelpers
@@ -58,54 +59,129 @@ namespace GLTFHelpers
 	}
 
 	template<typename T, int N>
-	void TrackFromChannel(Track<T, N>& result, const cgltf_animation_channel& channel)
+	void TrackFromChannel(Track<T, N>& inOutTrack, const cgltf_animation_channel& inChannel)
 	{
-		cgltf_animation_sampler& sampler = *channel.sampler;
+		cgltf_animation_sampler& sampler = *inChannel.sampler;
 
 		Interpolation interpolation = Interpolation::Constant;
-
-		if (sampler.interpolation == cgltf_interpolation_type_linear)
-		{
+		if (inChannel.sampler->interpolation == cgltf_interpolation_type_linear) {
 			interpolation = Interpolation::Linear;
 		}
-		else if (sampler.interpolation == cgltf_interpolation_type_cubic_spline)
-		{
+		else if (inChannel.sampler->interpolation == cgltf_interpolation_type_cubic_spline) {
 			interpolation = Interpolation::Cubic;
 		}
 		bool isSamplerCubic = interpolation == Interpolation::Cubic;
-		result.SetInterpolation(interpolation);
+		inOutTrack.SetInterpolation(interpolation);
 
-		std::vector<float> time; //times
-		GetScalarValues(time, 1, *sampler.input);
+		std::vector<float> timelineFloats;
+		GetScalarValues(timelineFloats, 1, *sampler.input);
 
-		std::vector<float> val; //values
-		GetScalarValues(val, N, *sampler.output);
+		std::vector<float> valueFloats;
+		GetScalarValues(valueFloats, N, *sampler.output);
 
-		unsigned int numFrames = sampler.input->count;
-		unsigned int compCount = val.size() / time.size();
-		result.Resize(numFrames);
-
-		for (unsigned int i = 0; i < numFrames; ++i)
-		{
-			int baseIndex = i * compCount;
-			Frame<N>& frame = result[i];
+		unsigned int numFrames = (unsigned int)sampler.input->count;
+		unsigned int numberOfValuesPerFrame = valueFloats.size() / timelineFloats.size();
+		inOutTrack.Resize(numFrames);
+		for (unsigned int i = 0; i < numFrames; ++i) {
+			int baseIndex = i * numberOfValuesPerFrame;
+			Frame<N>& frame = inOutTrack[i];
 			int offset = 0;
 
-			frame.mTime = time[i];
+			frame.mTime = timelineFloats[i];
 
-			for (int comp = 0; comp < N; ++comp)
-			{
-				frame.mIn[comp] = isSamplerCubic ? val[baseIndex + offset++] : 0.0f;
+			for (int component = 0; component < N; ++component) {
+				frame.mIn[component] = isSamplerCubic ? valueFloats[baseIndex + offset++] : 0.0f;
 			}
 
-			for (int comp = 0; comp < N; ++comp)
-			{
-				frame.mValue[comp] = val[baseIndex + offset++];
+			for (int component = 0; component < N; ++component) {
+				frame.mValue[component] = valueFloats[baseIndex + offset++];
 			}
 
-			for (int comp = 0; comp < N; ++comp)
+			for (int component = 0; component < N; ++component) {
+				frame.mOut[component] = isSamplerCubic ? valueFloats[baseIndex + offset++] : 0.0f;
+			}
+		}
+	}
+
+	void MeshFromAttribute(Mesh& outMesh, cgltf_attribute& attribute, cgltf_skin* skin, cgltf_node* nodes, unsigned int nodeCount)
+	{
+		cgltf_attribute_type attribType = attribute.type;
+		cgltf_accessor& accessor = *attribute.data;
+
+		unsigned int componentCount = 0;
+		if (accessor.type == cgltf_type_vec2)
+		{
+			componentCount = 2;
+		}
+		else if (accessor.type == cgltf_type_vec3)
+		{
+			componentCount = 3;
+		}
+		else if (accessor.type == cgltf_type_vec4)
+		{
+			componentCount = 4;
+		}
+
+		std::vector<float> values;
+		GetScalarValues(values, componentCount, accessor);
+		unsigned int accessorCount = (unsigned int)accessor.count;
+
+		std::vector<vec3>& positions = outMesh.GetPosition();
+		std::vector<vec3>& normals = outMesh.GetNormal();
+		std::vector<vec2>& texCoords = outMesh.GetTexCoord();
+		std::vector<ivec4>& influences = outMesh.GetInfluences();
+		std::vector<vec4>& weights = outMesh.GetWeights();
+
+		for (unsigned int i = 0; i < accessorCount; ++i)
+		{
+			int index = i * componentCount;
+			switch (attribType)
 			{
-				frame.mOut[comp] = isSamplerCubic ? val[baseIndex + offset++] : 0.0f;
+			case cgltf_attribute_type_invalid:
+				break;
+			case cgltf_attribute_type_position:
+				positions.push_back(vec3(values[index + 0], values[index + 1], values[index + 2]));
+				break;
+			case cgltf_attribute_type_normal:
+			{
+				vec3 normal = vec3(values[index + 0], values[index + 1], values[index + 2]);
+				if (lenSq(normal) < 0.000001f)
+				{
+					normal = vec3(0, 1, 0);
+				}
+				normals.push_back(normalized(normal));
+				break;
+			}
+			case cgltf_attribute_type_tangent:
+				break;
+			case cgltf_attribute_type_texcoord:
+				texCoords.push_back(vec2(values[index + 0], values[index + 1]));
+				break;
+			case cgltf_attribute_type_color:
+				break;
+			case cgltf_attribute_type_joints:
+			{
+				//These indices are skin relative. this function has no information about the skin that is being parsed. Add +0.5f to round, since we can't read integers
+				ivec4 joints((int)(values[index + 0] + 0.5f), (int)(values[index + 1] + 0.5f), (int)(values[index + 2] + 0.5f), (int)(values[index + 3] + 0.5f));
+
+				joints.x = GetNodeIndex(skin->joints[joints.x], nodes, nodeCount);
+				joints.y = GetNodeIndex(skin->joints[joints.y], nodes, nodeCount);
+				joints.z = GetNodeIndex(skin->joints[joints.z], nodes, nodeCount);
+				joints.w = GetNodeIndex(skin->joints[joints.w], nodes, nodeCount);
+
+				joints.x = std::max(0, joints.x);
+				joints.y = std::max(0, joints.y);
+				joints.z = std::max(0, joints.z);
+				joints.w = std::max(0, joints.w);
+
+				influences.push_back(joints);
+				break;
+			}
+			case cgltf_attribute_type_weights:
+				weights.push_back(vec4(values[index + 0], values[index + 1], values[index + 2], values[index + 3]));
+				break;
+			default:
+				break;
 			}
 		}
 	}
@@ -146,7 +222,7 @@ cgltf_data* LoadGLTFFile(const char* path)
 
 Pose LoadRestPose(cgltf_data * data)
 {
-	unsigned int boneCount = data->nodes_count;
+	unsigned int boneCount = (unsigned int)data->nodes_count;
 	Pose result(boneCount);
 
 	for (unsigned int i = 0; i < boneCount; ++i)
@@ -158,6 +234,104 @@ Pose LoadRestPose(cgltf_data * data)
 
 		int parent = GLTFHelpers::GetNodeIndex(node->parent, data->nodes, boneCount);
 		result.SetParent(i, parent);
+	}
+	return result;
+}
+
+Pose LoadBindPose(cgltf_data * data)
+{
+	Pose restPose = LoadRestPose(data);
+	unsigned int numBones = restPose.Size();
+	std::vector<Transform> worldBindPose(numBones);
+	for (unsigned int i = 0; i < numBones; ++i)
+	{
+		worldBindPose[i] = restPose.GetGlobalTransform(i);
+	}
+	unsigned int numSkins = (unsigned int)data->skins_count;
+	for (unsigned int i = 0; i < numSkins; ++i)
+	{
+		cgltf_skin* skin = &(data->skins[i]);
+		std::vector<float> invBindAccessor;
+		GLTFHelpers::GetScalarValues(invBindAccessor, 16, *skin->inverse_bind_matrices);
+
+		unsigned int numJoints = skin->joints_count;
+		for (int j = 0; j < numJoints; ++j)
+		{
+			//Read the inverse bind matrix of the joint
+			float* matrix = &(invBindAccessor[j * 16]);
+			mat4 inverseBindMatrix = mat4(matrix);
+			//invert, convert to transform
+			mat4 bindMatrix = inverse(inverseBindMatrix);
+			Transform bindTransform = mat4ToTransform(bindMatrix);
+			//Set that transform in teh worldBindPose
+			cgltf_node* jointNode = skin->joints[j];
+			int jointIndex = GLTFHelpers::GetNodeIndex(jointNode, data->nodes, numBones);
+			worldBindPose[jointIndex] = bindTransform;
+		}
+	}
+
+	//Convert the world bind pose to a regualr bind pose
+	Pose bindPose = restPose;
+	for (unsigned int i = 0; i < numBones; ++i)
+	{
+		Transform current = worldBindPose[i];
+		int p = bindPose.GetParent(i);
+		if (p >= 0) //Bring into parent space
+		{
+			Transform parent = worldBindPose[p];
+			current = combine(inverse(parent), current);
+		}
+		bindPose.SetLocalTransform(i, current);
+	}
+	return bindPose;
+}
+
+Skeleton LoadSkeleton(cgltf_data * data)
+{
+	return Skeleton(LoadRestPose(data), LoadBindPose(data), LoadJointNames(data));
+}
+
+std::vector<Mesh> LoadMeshes(cgltf_data * data)
+{
+	std::vector<Mesh> result;
+	cgltf_node* nodes = data->nodes;
+	unsigned int nodeCount = (unsigned int)data->nodes_count;
+
+	for (unsigned int i = 0; i < nodeCount; ++i)
+	{
+		cgltf_node* node = &nodes[i];
+		if (node->mesh == 0 || node->skin == 0)
+		{
+			continue;
+		}
+
+		unsigned int numPrims = (unsigned int)node->mesh->primitives_count;
+		for (int j = 0; j < numPrims; ++j)
+		{
+			result.push_back(Mesh());
+			Mesh& mesh = result[result.size() - 1];
+
+			cgltf_primitive* primitive = &node->mesh->primitives[j];
+
+			unsigned int ac = primitive->attributes_count;
+			for (unsigned int k = 0; k < ac; ++k)
+			{
+				cgltf_attribute* attribute = &primitive->attributes[k];
+				GLTFHelpers::MeshFromAttribute(mesh, *attribute, node->skin, nodes, nodeCount);
+			}
+			if (primitive->indices != 0)
+			{
+				unsigned int ic = (unsigned int)primitive->indices->count;
+				std::vector<unsigned int>& indices = mesh.GetIndices();
+				indices.resize(ic);
+
+				for (unsigned int k = 0; k < ic; ++k)
+				{
+					indices[k] = cgltf_accessor_read_index(primitive->indices, k);
+				}
+			}
+			mesh.UpdateOpenGLBuffers();
+		}
 	}
 	return result;
 }
@@ -185,8 +359,8 @@ std::vector<std::string> LoadJointNames(cgltf_data * data)
 
 std::vector<Clip> LoadAnimationClips(cgltf_data * data)
 {
-	unsigned int numClips = data->animations_count;
-	unsigned int numNodes = data->nodes_count;
+	unsigned int numClips = (unsigned int)data->animations_count;
+	unsigned int numNodes = (unsigned int)data->nodes_count;
 
 	std::vector<Clip> result;
 	result.resize(numClips);
@@ -195,7 +369,7 @@ std::vector<Clip> LoadAnimationClips(cgltf_data * data)
 	{
 		result[i].SetName(data->animations[i].name);
 
-		unsigned int numChannels = data->animations[i].channels_count;
+		unsigned int numChannels = (unsigned int)data->animations[i].channels_count;
 		for (unsigned int j = 0; j < numChannels; ++j)
 		{
 			cgltf_animation_channel& channel = data->animations[i].channels[j];
@@ -223,14 +397,14 @@ std::vector<Clip> LoadAnimationClips(cgltf_data * data)
 	return result;
 }
 
-void FreeGLTFFILE(cgltf_data* data)
+void FreeGLTFFile(cgltf_data * handle)
 {
-	if (data == 0)
+	if (handle == 0)
 	{
 		std::cout << "WARNING: Can't free null data\n";
 	}
 	else
 	{
-		cgltf_free(data);
+		cgltf_free(handle);
 	}
 }

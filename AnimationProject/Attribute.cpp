@@ -3,6 +3,7 @@
 #include "vec2.h"
 #include "vec3.h"
 #include "vec4.h"
+#include "quat.h"
 
 
 template Attribute<int>;
@@ -11,6 +12,7 @@ template Attribute<vec2>;
 template Attribute<vec3>;
 template Attribute<vec4>;
 template Attribute<ivec4>;
+template Attribute<quat>;
 
 template<typename T>
 Attribute<T>::Attribute()
@@ -88,6 +90,12 @@ template<>
 void Attribute<vec4>::SetAttribPointer(unsigned int s)
 {
 	glVertexAttribPointer(s, 4, GL_FLOAT, GL_FALSE, 0, 0);
+}
+
+template<>
+void Attribute<quat>::SetAttribPointer(unsigned int slot)
+{
+	glVertexAttribPointer(slot, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
 }
 
 template<typename T>

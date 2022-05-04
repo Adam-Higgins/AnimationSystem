@@ -30,6 +30,4 @@ public:
 	bool operator==(const Pose& other);
 	bool operator!=(const Pose& other);
 
-	bool IsInHierarchy(Pose& pose, unsigned int root, unsigned int search);
-	void Blend(Pose& output, Pose& a, Pose& b, float t, int root);
 };

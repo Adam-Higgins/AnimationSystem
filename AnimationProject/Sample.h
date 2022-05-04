@@ -10,6 +10,8 @@
 #include "Texture.h"
 #include "Shader.h"
 #include <vector>
+#include "CrossFadeController.h"
+#include "CrossFadeTarget.h"
 
 struct AnimationInstance {
 	Pose mAnimatedPose;
@@ -18,7 +20,13 @@ struct AnimationInstance {
 	float mPlayback;
 	Transform mModel;
 
-	inline AnimationInstance() : mClip(0), mPlayback(0.0f) { }
+	Pose mAddPose;
+	Pose mAdditiveBase;
+	float mAdditiveTime;
+	float mAdditiveDirection;
+	unsigned int mAdditiveIndex;
+
+	inline AnimationInstance() : mClip(0), mPlayback(0.0f), mAdditiveTime(0.0f), mAdditiveDirection(1.0f), mAdditiveIndex(0) { }
 };
 
 class Sample : public Application {
@@ -34,6 +42,10 @@ protected:
 
 	AnimationInstance mGPUAnimInfo;
 	AnimationInstance mCPUAnimInfo;
+
+	CrossFadeController mFadeController;
+	float mFadeTimer;
+
 public:
 	void Initialize();
 	void Update(float deltaTime);

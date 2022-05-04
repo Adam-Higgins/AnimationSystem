@@ -20,6 +20,7 @@ quat angleAxis(float angle, const vec3& axis)
 	return quat(norm.x * s, norm.y * s, norm.z * s, cosf(angle * 0.5f));
 }
 
+//returns the quaternion that would rotate the vec3 from to the vec3 to
 quat fromTo(const vec3 & from, const vec3 & to)
 {
 	vec3 f = normalized(from);
@@ -112,6 +113,7 @@ float len(const quat& q)
 	return sqrtf(lenSq);
 }
 
+//normalizes the given quat
 void normalize(quat& q)
 {
 	float lenSq = q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w;
@@ -127,6 +129,7 @@ void normalize(quat& q)
 	q.w *= i_len;
 }
 
+//returns the normalized quat
 quat normalized(const quat& q)
 {
 	float lenSq = q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
@@ -202,6 +205,7 @@ quat operator^(const quat& q, float f)
 	);
 }
 
+//spherical linear interpolation of a quat
 quat slerp(const quat& start, const quat& end, float t)
 {
 	if (fabsf(dot(start, end)) > 1.0f - QUAT_EPSILON) {

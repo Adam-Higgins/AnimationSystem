@@ -3,6 +3,7 @@
 #include "Clip.h"
 #include "Skeleton.h"
 #include "CrossFadeTarget.h"
+#include "Blending.h"
 
 class CrossFadeController
 {

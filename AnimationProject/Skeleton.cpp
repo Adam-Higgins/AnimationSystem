@@ -1,5 +1,6 @@
 #include "Skeleton.h"
 
+//Calculates the inverse bind pose using the current global transform
 void Skeleton::UpdateInverseBindPose()
 {
 	unsigned int size = mBindPose.Size();
@@ -21,6 +22,7 @@ Skeleton::Skeleton(const Pose & rest, const Pose & bind, const std::vector<std::
 	Set(rest, bind, names);
 }
 
+//fills the skeleton object with data for the rest pose, bind pose and names of each joints
 void Skeleton::Set(const Pose & rest, const Pose & bind, const std::vector<std::string>& names)
 {
 	mRestPose = rest;
@@ -28,6 +30,9 @@ void Skeleton::Set(const Pose & rest, const Pose & bind, const std::vector<std::
 	mJointNames = names;
 	UpdateInverseBindPose();
 }
+
+// GETTERS AND SETTERS
+
 
 Pose & Skeleton::GetBindPose()
 {

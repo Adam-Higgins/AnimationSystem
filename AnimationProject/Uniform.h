@@ -7,6 +7,8 @@
 #include "mat4.h"
 #include "quat.h"
 
+
+//Uniform Class used in OpenGL PipeLine
 template <typename T>
 class Uniform
 {

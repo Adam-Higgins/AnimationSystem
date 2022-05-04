@@ -21,6 +21,7 @@ Texture::~Texture()
 	glDeleteTextures(1, &mHandle);
 }
 
+//adds layer of abstraction to loading Texture using stb image loader
 void Texture::Load(const char* path)
 {
 	glBindTexture(GL_TEXTURE_2D, mHandle);
@@ -44,6 +45,7 @@ void Texture::Load(const char* path)
 	mChannels = channels;
 }
 
+//Sets and Bind a texture from a given texture index
 void Texture::Set(unsigned int uniformIndex, unsigned int textureIndex)
 {
 	glActiveTexture(GL_TEXTURE0 + textureIndex);
@@ -51,6 +53,7 @@ void Texture::Set(unsigned int uniformIndex, unsigned int textureIndex)
 	glUniform1i(uniformIndex, textureIndex);
 }
 
+//un binds the texture
 void Texture::UnSet(unsigned int textureIndex)
 {
 	glActiveTexture(GL_TEXTURE0 + textureIndex);

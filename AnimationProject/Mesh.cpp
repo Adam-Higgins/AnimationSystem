@@ -77,6 +77,7 @@ std::vector<unsigned int>& Mesh::GetIndices()
 	return mIndices;
 }
 
+//SKins the meshs using CPU as opposed to on the GPU
 #if 1
 void Mesh::CPUSkin(Skeleton& skeleton, Pose& pose) {
 	unsigned int numVerts = (unsigned int)mPosition.size();
@@ -92,6 +93,7 @@ void Mesh::CPUSkin(Skeleton& skeleton, Pose& pose) {
 		ivec4& j = mInfluences[i];
 		vec4& w = mWeights[i];
 
+		//inverse pose to get mat4 back into local space then multiplied by each of the weightings
 		mat4 m0 = (mPosePalette[j.x] * invPosePalette[j.x]) * w.x;
 		mat4 m1 = (mPosePalette[j.y] * invPosePalette[j.y]) * w.y;
 		mat4 m2 = (mPosePalette[j.z] * invPosePalette[j.z]) * w.z;

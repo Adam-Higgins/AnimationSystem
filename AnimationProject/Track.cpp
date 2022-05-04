@@ -173,7 +173,7 @@ int Track<T, N>::FrameIndex(float time, bool looping)
 			return i;
 		}
 	}
-	// invalid code, we should not reach here!
+	// invalid code, should not reach here!
 	return -1;
 } //END of the FrameIndex
 

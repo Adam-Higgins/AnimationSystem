@@ -136,38 +136,3 @@ bool Pose::operator!=(const Pose & other)
 	return !(*this == other);
 }
 
-bool Pose::IsInHierarchy(Pose& pose, unsigned int root, unsigned int search)
-{
-	if (search == root)
-	{
-		return true;
-	}
-	int p = pose.GetParent(search);
-
-	while (p >= 0)
-	{
-		if (p == (int)root)
-		{
-			return true;
-		}
-		p = pose.GetParent(p);
-	}
-	return false;
-}
-
-void Pose::Blend(Pose& output, Pose& a, Pose& b, float t, int root)
-{
-	unsigned int numJoints = output.Size();
-	for (unsigned int i = 0; i < numJoints; ++i)
-	{
-		if (root >= 0)
-		{
-			if (!IsInHierarchy(output, root, i))
-			{
-				continue;
-			}
-		}
-
-		output.SetLocalTransform(i, mix(a.GetLocalTransform(i), b.GetLocalTransform(i), t));
-	}
-}

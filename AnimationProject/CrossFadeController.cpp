@@ -86,7 +86,7 @@ void CrossFadeController::Update(float dt)
 		target.mElapsed += dt;
 		float t = target.mElapsed / target.mDuration;
 		if (t > 1.0f) { t = 1.0f; }
-		mPose.Blend(mPose, mPose, target.mPose, t, -1);
+		Blend(mPose, mPose, target.mPose, t, -1);
 	}
 }
 

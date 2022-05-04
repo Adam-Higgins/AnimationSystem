@@ -3,6 +3,7 @@
 #include "Sample.h"
 #include "GLTFLoader.h"
 #include "Uniform.h"
+#include "Blending.h"
 #include "glad.h"
 
 void Sample::Initialize() {
@@ -17,6 +18,7 @@ void Sample::Initialize() {
 		mGPUMeshes[i].UpdateOpenGLBuffers();
 	}
 
+	//Load Textures and Shaders
 	mStaticShader = new Shader("static.vert", "lit.frag");
 	mSkinnedShader = new Shader("skinned.vert", "lit.frag");
 	mDiffuseTexture = new Texture("Woman.png");
@@ -26,6 +28,7 @@ void Sample::Initialize() {
 	mCPUAnimInfo.mAnimatedPose = mSkeleton.GetRestPose();
 	mCPUAnimInfo.mPosePalette.resize(mSkeleton.GetRestPose().Size());
 
+	//Positioning models in world position
 	mGPUAnimInfo.mModel.position = vec3(-2, 0, 0);
 	mCPUAnimInfo.mModel.position = vec3(2, 0, 0);
 
@@ -37,18 +40,70 @@ void Sample::Initialize() {
 		else if (mClips[i].GetName() == "Running") {
 			mGPUAnimInfo.mClip = i;
 		}
+		else if (mClips[i].GetName() == "Lean_Left")
+		{
+			mCPUAnimInfo.mAdditiveIndex = i;
+		}
 	}
+
+	//Create and set poses needed for additive blending
+	mCPUAnimInfo.mAdditiveBase = MakeAdditivePose(mSkeleton, mClips[mCPUAnimInfo.mAdditiveIndex]);
+	mClips[mCPUAnimInfo.mAdditiveIndex].SetLooping(false);
+	mCPUAnimInfo.mAddPose = mSkeleton.GetRestPose();
+
+	//initialising Fade controller needed for smooth animation blending
+	mFadeController.SetSkeleton(mSkeleton);
+	mFadeController.Play(&mClips[0]);
+	mFadeController.Update(0.0f);
+	mFadeController.GetCurrentPose().GetMatrixPalette(mGPUAnimInfo.mPosePalette);
+	mFadeTimer = 3.0f;
 }
 
 void Sample::Update(float deltaTime) {
-	mCPUAnimInfo.mPlayback = mClips[mCPUAnimInfo.mClip].Sample(mCPUAnimInfo.mAnimatedPose, mCPUAnimInfo.mPlayback + deltaTime);
-	mGPUAnimInfo.mPlayback = mClips[mGPUAnimInfo.mClip].Sample(mGPUAnimInfo.mAnimatedPose, mGPUAnimInfo.mPlayback + deltaTime);
 
+	mCPUAnimInfo.mAdditiveTime += deltaTime * mCPUAnimInfo.mAdditiveDirection;
+
+	if (mCPUAnimInfo.mAdditiveTime < 0.0f) {
+		mCPUAnimInfo.mAdditiveTime = 0.0f;
+		mCPUAnimInfo.mAdditiveDirection *= -1.0f;
+	}
+
+	if (mCPUAnimInfo.mAdditiveTime > 1.0f) {
+		mCPUAnimInfo.mAdditiveTime = 1.0f;
+		mCPUAnimInfo.mAdditiveDirection *= -1.0f;
+	}
+
+	// Sample the animation playing for the walking character
+	mCPUAnimInfo.mPlayback = mClips[mCPUAnimInfo.mClip].Sample(mCPUAnimInfo.mAnimatedPose, mCPUAnimInfo.mPlayback + deltaTime);
+
+	//Applies additive blending so that the lean animation is applied to the walking animation so they are played at the same time
+	float time = mClips[mCPUAnimInfo.mAdditiveIndex].GetStartTime() + (mClips[mCPUAnimInfo.mAdditiveIndex].GetDuration() * mCPUAnimInfo.mAdditiveTime);
+	mClips[mCPUAnimInfo.mAdditiveIndex].Sample(mCPUAnimInfo.mAddPose, time);
+	Add(mCPUAnimInfo.mAnimatedPose, mCPUAnimInfo.mAnimatedPose, mCPUAnimInfo.mAddPose, mCPUAnimInfo.mAdditiveBase, -1);
+
+	//Skin the walking model using CPU Skinning
 	for (unsigned int i = 0, size = (unsigned int)mCPUMeshes.size(); i < size; ++i) {
 		mCPUMeshes[i].CPUSkin(mSkeleton, mCPUAnimInfo.mAnimatedPose);
 	}
 
-	mGPUAnimInfo.mAnimatedPose.GetMatrixPalette(mGPUAnimInfo.mPosePalette);
+	//update fade controller for current anim sampling
+	mFadeController.Update(deltaTime);
+
+	//change animation to a new random animation every 3 seconds
+	mFadeTimer -= deltaTime;
+	if (mFadeTimer < 0.0f) {
+		mFadeTimer = 3.0f;
+
+		unsigned int clip = mGPUAnimInfo.mClip;
+		while (clip == mGPUAnimInfo.mClip) {
+			clip = rand() % mClips.size();
+		}
+		mGPUAnimInfo.mClip = clip;
+
+		mFadeController.FadeTo(&mClips[clip], 0.5f);
+	}
+
+	mFadeController.GetCurrentPose().GetMatrixPalette(mGPUAnimInfo.mPosePalette);
 }
 
 void Sample::Render(float inAspectRatio) {

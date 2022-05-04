@@ -117,11 +117,14 @@
   <ItemGroup>
     <ClInclude Include="Application.h" />
     <ClInclude Include="Attribute.h" />
+    <ClInclude Include="Blending.h" />
+    <ClInclude Include="CCDSolver.h" />
     <ClInclude Include="cgltf.h" />
     <ClInclude Include="Clip.h" />
     <ClInclude Include="CrossFadeController.h" />
     <ClInclude Include="CrossFadeTarget.h" />
     <ClInclude Include="Draw.h" />
+    <ClInclude Include="FABRIKSolver.h" />
     <ClInclude Include="Frame.h" />
     <ClInclude Include="glad.h" />
     <ClInclude Include="GLTFLoader.h" />
@@ -148,10 +151,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Attribute.cpp" />
+    <ClCompile Include="Blending.cpp" />
+    <ClCompile Include="CCDSolver.cpp" />
     <ClCompile Include="cgltf.c" />
     <ClCompile Include="Clip.cpp" />
     <ClCompile Include="CrossFadeController.cpp" />
     <ClCompile Include="Draw.cpp" />
+    <ClCompile Include="FABRIKSolver.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="GLTFLoader.cpp" />
     <ClCompile Include="IndexBuffer.cpp" />
